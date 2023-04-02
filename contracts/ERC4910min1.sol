@@ -129,18 +129,18 @@ contract RoyaltyModule is StorageStructure, Ownable {
 //         return true;
 //     }
 
-//     function getAccount(uint256 tokenId)
-//         public
-//         view
-//         returns (
-//             address,
-//             RoyaltyAccount memory,
-//             RASubAccount[] memory
-//         )
-//     {
-//         address royaltyAccount = _tokenindextoRA[tokenId];
-//         return (royaltyAccount, _royaltyaccount[royaltyAccount], _royaltysubaccounts[royaltyAccount]);
-//     }
+    function getAccount(uint256 tokenId)
+        public
+        view
+        returns (
+            address,
+            RoyaltyAccount memory,
+            RASubAccount[] memory
+        )
+    {
+        address royaltyAccount = _tokenindextoRA[tokenId];
+        return (royaltyAccount, _royaltyaccount[royaltyAccount], _royaltysubaccounts[royaltyAccount]);
+    }
 
 //     // Lib variant
 //     // Rules:
@@ -665,13 +665,16 @@ contract RoyaltyBearingToken is ERC721Burnable, ERC721Pausable, ERC721URIStorage
         _tokenIdTracker.increment();
     }
 
-//     function init(address royaltyModuleAddress, address paymentModuleAddress) public virtual {
-//         require(!onlyOnce, 'Init was called before');
-//         require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Admin role required');
-//         royaltyModule = RoyaltyModule(royaltyModuleAddress);
+    // function init(address royaltyModuleAddress, address paymentModuleAddress) public virtual {
+    function init(address royaltyModuleAddress) public virtual {
+        console.log("INIT fn1",royaltyModuleAddress);
+        require(!onlyOnce, 'Init was called before');
+        console.log("INIT fn2",onlyOnce);
+        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Admin role required');
+        royaltyModule = RoyaltyModule(royaltyModuleAddress);
 //         paymentModule = PaymentModule(paymentModuleAddress);
-//         onlyOnce = true;
-//     }
+        onlyOnce = true;
+    }
 
 //     function updatelistinglimit(uint256 maxListingNumber) public virtual returns (bool) {
 //         //ensure that msg.sender has the creater role or internal call
@@ -758,19 +761,29 @@ contract RoyaltyBearingToken is ERC721Burnable, ERC721Pausable, ERC721URIStorage
 
 //     //Royalty module functions
 //     //Get a Royalty Account through the NFT token index
-//     function getRoyaltyAccount(uint256 tokenId)
-//         public
-//         view
-//         virtual
-//         returns (
-//             address accountId,
-//             RoyaltyAccount memory account,
-//             RASubAccount[] memory subaccounts
-//         )
-//     {
-//         require(_exists(tokenId), 'NFT does not exist');
-//         return royaltyModule.getAccount(tokenId);
-//     }
+    function getRoyaltyAccount(uint256 tokenId)
+        public
+        view
+        virtual
+        returns (
+            address accountId
+            // RoyaltyAccount memory account,
+            // RASubAccount[] memory subaccounts
+        )
+    {
+        require(_exists(tokenId), 'NFT does not exist');
+        // require(_exists(royaltyModule), 'Royalty module does not exist');
+        console.log("BEFORE royaltyModule");
+        // if(royaltyModule){
+        //     return royaltyModule.getAccount(tokenId);
+        // }
+
+        //FROM RoyaltyModule:
+            // address royaltyAccount = address(0);//_tokenindextoRA[tokenId];
+            // return royaltyAccount;
+            // return (royaltyAccount, _royaltyaccount[royaltyAccount], _royaltysubaccounts[royaltyAccount]);
+        // end
+    }
 
 //     // Rules:
 //     // Only subaccount owner can decrease splitRoyalty for this subaccount

@@ -5,7 +5,168 @@ const { expect } = require("chai");
   // https://hardhat.org/hardhat-network-helpers/docs/reference
   // https://hardhat.org/hardhat-chai-matchers/docs/overview
 
-describe("RoyaltyBearingToken", function () {
+
+  //PAYOUT TEST VARIABLES.
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+  // const accAdmin = accounts[0];
+  // const accSeller = accounts[1];
+  // const accBuyer = accounts[2];
+  // const accReceiver = accounts[3];
+  // const accOtherBuyer = accounts[4];
+  // const accSomeOther = accounts[5];
+
+  // const costOfNFT = 100;
+  // const token_1 = 1;
+  const token_1_1 = 2;
+  // const token_1_1_1 = 3;
+  // const token_1_1_2 = 4;
+  // const token_2 = 5;
+  // const token_not_exists = 999;
+
+  // let token;
+  // let someToken1;
+  // let someToken2;
+  // let paymentModule;
+
+
+
+describe("RoyaltyBearingToken: RBT:ROYALTY PAYOUT TESTS", function () {
+  async function deployRoyaltyPayoutFIXTURE() { //define fixture
+    const timestamp = (await time.latest());
+    console.log('RBT1 Constructor');
+    // Contracts are deployed using the first signer/account by default
+    const [owner, account2, account3 ] = await ethers.getSigners();
+    console.log("OWNER:",owner.address);
+    console.log("ADDRESS2:",account2.address);
+
+
+    //RBT - TOKEN - token
+    const RoyaltyBearingToken = await ethers.getContractFactory("RoyaltyBearingToken");
+    const RBT1 = await RoyaltyBearingToken.deploy('RBT1','TEST111','baseURI1',owner.address,8);
+    
+    const RoyaltyModule = await ethers.getContractFactory("RoyaltyModule");
+    const royaltyModule = await RoyaltyModule.deploy(
+      RBT1.address,
+      account2.address, //TT Royalty, ?
+      1000, // royaltySplitTT 1000 = 10%,
+      500, //minRoyaltySplit
+      5, //maxSubAccount      
+    );
+
+  //   before(async () => { //EXAMPLE 1 from RBT TEST
+  //     someToken1 = await SomeERC20_1.deployed();
+  //     someToken2 = await SomeERC20_2.deployed();
+  //     token = await RoyaltyBearingToken.deployed();
+
+  //     paymentModule = await PaymentModule.deployed();
+
+  //     //Mint some  ERC20 tokens
+  //     await someToken1.mint(accBuyer, 100000000, { from: accAdmin });
+  //     await someToken2.mint(accBuyer, 100000000, { from: accAdmin });
+  //     await someToken2.mint(accOtherBuyer, 100000000, { from: accAdmin });
+  // });
+
+  // EXAMPLE 2 from DEPLOY_CONTRACTS
+  // const ERC20_1 = await deployer.deploy(SomeERC20_1, 'Some test token #1', 'ST1');
+  // const ERC20_2 = await deployer.deploy(SomeERC20_2, 'Some test token #2', 'ST2');
+  
+    //  const token = await RoyaltyBearingToken.deploy('RBT2','TEST2','baseURI2',owner.address,8);
+  // const token = await deployer.deploy(
+  //     RoyaltyBearingToken,
+  //     'RoyaltyBearingToken',
+  //     'RBT',
+  //     'https:\\\\some.base.url\\',
+  //     ['ETH', 'ST1', 'ST2'],
+  //     ['0x0000000000000000000000000000000000000000', ERC20_1.address, ERC20_2.address],
+  //     accounts[0],
+  //     100, //numGenerations
+  // );
+
+  // const royaltyModule = await deployer.deploy(
+  //     RoyaltyModule,
+  //     token.address,
+  //     accounts[0], //TT Royalty,
+  //     1000, // royaltySplitTT 1000 = 10%,
+  //     500, //minRoyaltySplit
+  //     5, //maxSubAccount
+  // );
+  // const paymentModule = await deployer.deploy(
+  //     PaymentModule,
+  //     token.address,
+  //     10, //maxListingNumber
+  // );
+
+    await RBT1.init(royaltyModule.address);
+      //TEST-VARIABLES
+      // accAdmin = owner;
+  // await token.init(royaltyModule.address, paymentModule.address);
+    // token.init(ZERO_ADDRESS, ZERO_ADDRESS, { from: accAdmin })
+    return { RBT1, royaltyModule, owner, account2, account3 };
+  }
+
+  describe("Deploy Payout Contract:", function() {
+    it("should init RBT and ROYALTY", async function () {
+      const {RBT1, royaltyModule} = await loadFixture(deployRoyaltyPayoutFIXTURE);
+      expect(RBT1); //exists
+      expect(royaltyModule); //attached royalty RA lookup 
+      console.log("NAME:",await RBT1.name(),"SYMBOL:",await RBT1.symbol());
+      expect(await RBT1.name()).to.equal('RBT1');
+      expect(await RBT1.symbol()).to.equal('TEST111');
+      const balance = await ethers.provider.getBalance(RBT1.address)
+      console.log("BALANCE:", balance);
+      expect(balance).to.equal(0); 
+    })
+  });
+
+  describe('royaltyPayOut restrictions', async () => {
+    it('second init - ERROR', async () => {
+      const {RBT1} = await loadFixture(deployRoyaltyPayoutFIXTURE);      
+      await expect(RBT1.init(ZERO_ADDRESS)).to.be.revertedWith("Init was called before");
+      // await RBT1.init(ZERO_ADDRESS /*, ZERO_ADDRESS, { from: owner }*/ )
+      // await truffleAssert.reverts(token.init(ZERO_ADDRESS, ZERO_ADDRESS, { from: accAdmin }), 'Init was called before');
+    });
+    it('Success payout', async () => {
+      const {RBT1} = await loadFixture(deployRoyaltyPayoutFIXTURE);
+      // expect(RBT1); //NAME and SYMBOL and BALANCE
+      const ra_1_1_before = await RBT1.getRoyaltyAccount(token_1_1);
+      // const ra_1_1_before = await token.getRoyaltyAccount(token_1_1);
+      // await token.royaltyPayOut(2, accBuyer, accBuyer, 1, { from: accBuyer });
+      // const ra_1_1_after = await token.getRoyaltyAccount(token_1_1);
+      // assert.equal(ra_1_1_before.subaccounts[0].royaltyBalance - 1, ra_1_1_after.subaccounts[0].royaltyBalance, 'Royalty changed after payout');
+    });
+    xit('Payout TT royalty from (3)', async () => {
+      const ra_1_1_1_before = await token.getRoyaltyAccount(token_1_1_1);
+      await token.royaltyPayOut(token_1_1_1, accAdmin, accAdmin, ra_1_1_1_before.subaccounts[1].royaltyBalance, { from: accAdmin });
+      const ra_1_1_1_after = await token.getRoyaltyAccount(token_1_1_1);
+      assert.equal(ra_1_1_1_after.subaccounts[1].royaltyBalance, 0);
+    });
+
+    xit('Only subaccount owner can run payout', async () => {
+  
+        await truffleAssert.reverts(token.royaltyPayOut(token_1, accBuyer, accBuyer, 1, { from: accOtherBuyer }), 'Sender must be subaccount owner');
+        await truffleAssert.reverts(token.royaltyPayOut(token_1_1, accBuyer, accBuyer, 1, { from: accOtherBuyer }), 'Sender must be subaccount owner');
+        await truffleAssert.reverts(token.royaltyPayOut(token_1_1_1, accBuyer, accBuyer, 1, { from: accOtherBuyer }), 'Sender must be subaccount owner');
+    });
+    xit('Payout limited to royalty balance', async () => {
+        await truffleAssert.reverts(token.royaltyPayOut(token_1_1, accBuyer, accBuyer, 999, { from: accBuyer }), 'Insufficient royalty balance');
+    });
+    xit('Payout for non exist NFT restricted', async () => {
+        await truffleAssert.reverts(token.royaltyPayOut(token_not_exists, accBuyer, accBuyer, 1, { from: accBuyer }), 'Subaccount not found');
+    });
+    xit('Success payout', async () => {
+        const ra_1_1_before = await token.getRoyaltyAccount(token_1_1);
+        await token.royaltyPayOut(2, accBuyer, accBuyer, 1, { from: accBuyer });
+        const ra_1_1_after = await token.getRoyaltyAccount(token_1_1);
+        assert.equal(ra_1_1_before.subaccounts[0].royaltyBalance - 1, ra_1_1_after.subaccounts[0].royaltyBalance, 'Royalty changed after payout');
+    });
+  });
+  
+
+
+
+}); //END ROYALTY TESTS
+
+describe("RoyaltyBearingToken: RBT:721 TESTS", function () {
   async function deployGenericTestFixture() { //define fixture
     const timestamp = (await time.latest());
     console.log('RBT1 Constructor');
