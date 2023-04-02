@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 // Apache License  Version 2.0, January 2004  http://www.apache.org/licenses/
 
+import "hardhat/console.sol"; //remove before deploy
 ////StorageStructure.sol
 
 contract StorageStructure {
@@ -616,7 +617,7 @@ contract RoyaltyBearingToken is ERC721Burnable, ERC721Pausable, ERC721URIStorage
     using Counters for Counters.Counter;
     bool private onlyOnce = false;
 
-    constructor(
+    constructor( 
         string memory name,
         string memory symbol,
         string memory baseTokenURI,
@@ -625,6 +626,7 @@ contract RoyaltyBearingToken is ERC721Burnable, ERC721Pausable, ERC721URIStorage
         address creatorAddress,
         uint256 numGenerations
     ) ERC721(name, symbol) {
+        console.log('RBT-CONTRACT-CONSTRUCTOR()');
         require(_msgSender() == tx.origin, 'Caller must not be a contract'); //ERROR: contract caller
         require(!creatorAddress.isContract(), 'Creator must not be a contract'); //ERROR: creator contract
         //require(allowedTokenTypes.length == allowedTokenAddresses.length, 'Numbers of allowed tokens'); //ERROR:token limit 
@@ -779,6 +781,11 @@ contract RoyaltyBearingToken is ERC721Burnable, ERC721Pausable, ERC721URIStorage
 
 //         royaltyModule.updateRoyaltyAccount(tokenId, affectedSubaccounts, _msgSender(), isTokenOwner);
 //     }
+
+function safeMintRBT(address to, uint8 identityData) public returns (string memory) {        
+    console.log("MINT",identityData);
+    return "rbt minted";
+}
 
 //     /**
 //      * @dev Creates a new token for `to`. Its token ID will be automatically
